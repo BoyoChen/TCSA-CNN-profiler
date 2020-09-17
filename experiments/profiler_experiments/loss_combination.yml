@@ -1,0 +1,46 @@
+experiment_name: test_loss_combination
+
+template:
+  sub_exp_name: loss:profile
+  profiler: profiler_2_8
+  data:
+    data_folder: TCSA_data/
+    batch_size: 100
+    shuffle_buffer: 100000
+    coordinate: polar
+    valid_profile_only: no
+
+  train_profiler:
+    max_epoch: 150
+    evaluate_freq: 5
+    loss_function: MSE
+    loss_ratio:
+      profile: 1
+
+sub_experiments:
+- sub_exp_name: loss:profile+Vmax
+  train_profiler:
+    loss_ratio:
+      Vmax: 0.3
+      profile: 1
+
+- sub_exp_name: loss:profile+R34
+  train_profiler:
+    loss_ratio:
+      R34: 0.1
+      profile: 1
+
+- sub_exp_name: loss:profile+Vmax+R34
+  train_profiler:
+    loss_ratio:
+      Vmax: 0.3
+      profile: 1
+      R34: 0.1
+
+- sub_exp_name: loss:profile+Vmax+R34(sum_version)
+  profiler: profiler_3_4
+  train_profiler:
+    loss_ratio:
+      Vmax: 0.3
+      profile: 1
+      R34: 0.1

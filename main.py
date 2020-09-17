@@ -3,58 +3,9 @@ import os
 import importlib
 import tensorflow as tf
 
-from modules.compound_model import CompoundModel
-from modules.regressor_trainer import train_regressor
-from modules.compound_model_trainer import train_compound_model
-from modules.training_helper import evaluate_regression_MSE, get_tensorflow_datasets
+from modules.profiler_trainer import train_profiler
+from modules.training_helper import evaluate_loss, get_tensorflow_datasets
 from modules.experiment_helper import parse_experiment_settings
-
-
-def create_model_by_experiment_settings(experiment_settings, load_from=''):
-
-    def create_model_instance(model_category, model_name):
-        model_class = importlib.import_module('model_library.' + model_category + 's.' + model_name).Model
-        return model_class()
-
-    if 'compound_model' in experiment_settings:
-        compound_model_setting = experiment_settings['compound_model']
-        sub_models = {
-            model_category: create_model_instance(
-                model_category,
-                compound_model_setting[model_category]
-            ) for model_category in ['generator', 'discriminator', 'regressor']
-        }
-        reset_regressor = ''
-        if not load_from and 'load_pretrain_weight' in compound_model_setting:
-            pretrain_weight_setting = compound_model_setting['load_pretrain_weight']
-            from_experiment = pretrain_weight_setting.get('from_experiment', experiment_settings['experiment_name'])
-            from_sub_exp = pretrain_weight_setting['from_sub_exp']
-            load_from = prepare_model_save_path(from_experiment, from_sub_exp)
-            reset_regressor = pretrain_weight_setting.get('reset_regressor', '')
-        if load_from:
-            for model_category, sub_model in sub_models.items():
-                sub_model.load_weights(load_from + '/' + model_category)
-        if reset_regressor:
-            sub_models['regressor'] = create_model_instance('regressor', compound_model_setting['regressor'])
-        compound_model = CompoundModel(**sub_models)
-        return compound_model
-    if 'regressor' in experiment_settings:
-        model_category = 'regressor'
-        regressor = create_model_instance(model_category, experiment_settings[model_category])
-        if load_from:
-            regressor.load_weights(load_from + '/' + model_category)
-        return regressor
-
-
-# This function is faciliating creating model instance in jupiter notebook
-def create_model_by_experiment_path_and_stage(experiment_path, sub_exp_name):
-    sub_exp_settings = parse_experiment_settings(experiment_path, only_this_sub_exp=sub_exp_name)
-    experiment_name = sub_exp_settings['experiment_name']
-    sub_exp_name = sub_exp_settings['sub_exp_name']
-
-    model_save_path = prepare_model_save_path(experiment_name, sub_exp_name)
-    model = create_model_by_experiment_settings(sub_exp_settings, load_from=model_save_path)
-    return model
 
 
 def prepare_model_save_path(experiment_name, sub_exp_name):
@@ -69,12 +20,35 @@ def prepare_model_save_path(experiment_name, sub_exp_name):
     return model_save_path
 
 
+def create_model_by_experiment_settings(experiment_settings, load_from=''):
+
+    def create_model_instance(model_category, model_name):
+        model_class = importlib.import_module(f'model_library.{model_category}s.{model_name}').Model
+        return model_class()
+
+    profiler = create_model_instance('profiler', experiment_settings['profiler'])
+    if load_from:
+        profiler.load_weights(f'{load_from}/profiler')
+    return profiler
+
+
+# This function is faciliating creating model instance in jupiter notebook
+def create_model_by_experiment_path_and_stage(experiment_path, sub_exp_name):
+    sub_exp_settings = parse_experiment_settings(experiment_path, only_this_sub_exp=sub_exp_name)
+    experiment_name = sub_exp_settings['experiment_name']
+    sub_exp_name = sub_exp_settings['sub_exp_name']
+
+    model_save_path = prepare_model_save_path(experiment_name, sub_exp_name)
+    model = create_model_by_experiment_settings(sub_exp_settings, load_from=model_save_path)
+    return model
+
+
 def execute_sub_exp(sub_exp_settings, action, run_anyway):
     experiment_name = sub_exp_settings['experiment_name']
     sub_exp_name = sub_exp_settings['sub_exp_name']
-    log_path = 'logs/%s/%s' % (experiment_name, sub_exp_name)
+    log_path = f'logs/{experiment_name}/{sub_exp_name}'
 
-    print('Executing sub-experiment: %s' % sub_exp_name)
+    print(f'Executing sub-experiment: {sub_exp_name}')
     if not run_anyway and action == 'train' and os.path.isdir(log_path):
         print('Sub-experiment already done before, skipped ಠ_ಠ')
         return
@@ -86,26 +60,21 @@ def execute_sub_exp(sub_exp_settings, action, run_anyway):
     if action == 'train':
         model = create_model_by_experiment_settings(sub_exp_settings)
 
-        if 'train_compound_model' in sub_exp_settings:
-            training_settings = sub_exp_settings['train_compound_model']
-            trainer_function = train_compound_model
-        elif 'train_regressor' in sub_exp_settings:
-            training_settings = sub_exp_settings['train_regressor']
-            trainer_function = train_regressor
-
-        trainer_function(
+        train_profiler(
             model,
             datasets,
             summary_writer,
             model_save_path,
-            **training_settings
+            **sub_exp_settings['train_profiler']
         )
 
     elif action == 'evaluate':
         model = create_model_by_experiment_settings(sub_exp_settings, load_from=model_save_path)
         for phase in datasets:
-            loss = evaluate_regression_MSE(model, datasets[phase])
-            print('%s MSE loss: %lf, RMSE loss: %lf' % (phase, loss, loss**0.5))
+            profile_loss, Vmax_loss, R34_loss = evaluate_loss(model, datasets[phase], loss_function='MSE')
+            print(f'{phase} MSE profile_loss: {profile_loss}')
+            print(f'{phase} MSE Vmax_loss: {Vmax_loss}')
+            print(f'{phase} MSE R34_loss: {R34_loss}')
 
 
 def main(action, experiment_path, GPU_limit, run_anyway):
@@ -130,8 +99,8 @@ def main(action, experiment_path, GPU_limit, run_anyway):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('action', help='(train/evaluate)')
     parser.add_argument('experiment_path', help='name of the experiment setting, should match one of them file name in experiments folder')
+    parser.add_argument('--action', help='(train/evaluate)', default='train')
     parser.add_argument('--GPU_limit', type=int, default=3000)
     parser.add_argument('--omit_completed_sub_exp', action='store_true')
     args = parser.parse_args()

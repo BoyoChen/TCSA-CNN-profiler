@@ -1,0 +1,67 @@
+experiment_name: structure_and_kernel
+
+template:
+  sub_exp_name: 6x3
+  profiler: profiler_2_10
+  data:
+    data_folder: TCSA_data/
+    batch_size: 100
+    shuffle_buffer: 100000
+    coordinate: polar
+    valid_profile_only: no
+
+  train_profiler:
+    max_epoch: 60
+    evaluate_freq: 5
+    loss_function: MSE
+    loss_ratio:
+      Vmax: 0.25
+      profile: 1
+      R34: 0.0005
+
+sub_experiments:
+
+- sub_exp_name: 8x3
+  regressor: profiler_2_11
+
+- sub_exp_name: 2x2_cart
+  profiler: profiler_2_1
+  data:
+    coordinate: cart
+
+- sub_exp_name: 3x3_cart
+  regressor: profiler_2_5
+  data:
+    coordinate: cart
+
+- sub_exp_name: 4x4_cart
+  regressor: profiler_2_9
+  data:
+    coordinate: cart
+
+- sub_exp_name: 2x2
+  profiler: profiler_2_1
+
+- sub_exp_name: 2x3
+  regressor: profiler_2_2
+
+- sub_exp_name: 2x4
+  regressor: profiler_2_3
+
+- sub_exp_name: 3x2
+  regressor: profiler_2_4
+
+- sub_exp_name: 3x3
+  regressor: profiler_2_5
+
+- sub_exp_name: 3x4
+  regressor: profiler_2_6
+
+- sub_exp_name: 4x2
+  regressor: profiler_2_7
+
+- sub_exp_name: 4x3
+  regressor: profiler_2_8
+
+- sub_exp_name: 4x4
+  regressor: profiler_2_9

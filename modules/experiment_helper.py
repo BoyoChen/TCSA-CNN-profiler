@@ -20,14 +20,17 @@ def parse_experiment_settings(experiment_path, only_this_sub_exp=''):
         return source
 
     exp_list = [template_exp_settings]
-    if only_this_sub_exp == template_exp_settings['sub_exp_name']:
-        return template_exp_settings
+
     for sub_exp_overrides in experiment_settings.get('sub_experiments', []):
         sub_exp_settings = copy.deepcopy(template_exp_settings)
         sub_exp_settings = deep_update(sub_exp_settings, sub_exp_overrides)
         exp_list.append(sub_exp_settings)
 
-        if only_this_sub_exp == sub_exp_settings['sub_exp_name']:
-            return sub_exp_settings
+    if only_this_sub_exp:
+        for sub_exp in exp_list:
+            if sub_exp['sub_exp_name'] == only_this_sub_exp:
+                return sub_exp
+        print('sub_exp not found!')
+        return {}
 
     return exp_list
