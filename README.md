@@ -36,7 +36,9 @@ experiments/profiler_experiments/structure_and_kernel.yml: To obtain the compari
 experiments/profiler_experiments/loss_combination.yml: To obtain the comparison between different factor combinations in the loss function (table 2 in the paper).
 ```
 
-***Notice that due to the double bind review and the upload file limitation, only sample data are provided in the repository. Therefore, the reproduction of the experiments are temporally impossible.***
+***
+Notice that due to the double bind review and the upload file limitation (the whole dataset is 19 GB while the uploaded file size limitation is 35 MB), only sample data are provided. Therefore, the reproduction of the experiments are temporally impossible.
+***
 
 ### Some usful aguments
 
