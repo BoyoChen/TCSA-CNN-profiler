@@ -28,7 +28,7 @@ pipenv run pip install tensorflow_addons
 To run the experiments in the paper, run this command:
 
 ```train
-pipenv run python main.py train <experiment_path>
+pipenv run python main.py <experiment_path>
 
 <experiment_path>:
 experiments/profiler_experiments/structure_and_kernel.yml: To obtain the comparison between different kernel shapes (table 1 in the paper).
@@ -36,14 +36,14 @@ experiments/profiler_experiments/structure_and_kernel.yml: To obtain the compari
 experiments/profiler_experiments/loss_combination.yml: To obtain the comparison between different factor combinations in the loss function (table 2 in the paper).
 ```
 
-***Notice that due to the double bind review, only sample data are provided in the repository. Therefore, the reproduction of the experiments are temporally impossible.***
+***Notice that due to the double bind review and the upload file limitation, only sample data are provided in the repository. Therefore, the reproduction of the experiments are temporally impossible.***
 
 ### Some usful aguments
 
 #### To limit GPU usage
 Add *GPU_limit* argument, for example:
 ```args
-pipenv run python train main.py <experiment_path> --GPU_limit 3000
+pipenv run python main.py <experiment_path> --GPU_limit 3000
 ```
 
 #### Continue from previous progress
@@ -62,7 +62,7 @@ rm -r logs/test_loss_combination/loss:profile+R34/
 
 2. Restart experiment with argument: *omit_completed_sub_exp*.
 ```
-pipenv run python train main.py experiments/profiler_experiments/loss_combination.yml --omit_completed_sub_exp
+pipenv run python main.py experiments/profiler_experiments/loss_combination.yml --omit_completed_sub_exp
 ```
 
 ## Evaluation
