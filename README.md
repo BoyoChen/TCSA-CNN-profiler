@@ -90,6 +90,12 @@ Validation score can be obtained from the **[valid] regressor: blending_loss** i
 
 ![Case_study](figs/more_cases.png)
 
+In the above we provide 6 cases from different TCs to compare the predicted profiles and the ASCAT observation. Here we have several observations:
+
+1. If Vmax loss is added to the loss function, the model tend to 'tap' the maximum velocity with a sharp peak (the middle right case). In contrast, if Vmax loss is not included in the loss function, the model produce much more smooth predictions.
+2. In every cases, the model with additional Vmax loss produce higher curves, which in most cases are more similar to the corresponding profile labels. However, there are still sporadic exceptions (the upper left case).
+3. ASCAT, as the most reliable tropical cyclone size estimation techniques so far, is likely to under-estimate the velocity when the actual velocity is extreme. In contrast, our model provide reliable estimation in both inner and outer core of tropical cyclones.
+
 Our model achieves the following performance:
 
 ![performance_table](figs/performance_table.png)
